@@ -1,3 +1,7 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json"
+  // "compilerOptions": {
+  //   "baseUrl": ".", // 기준 경로를 프로젝트의 루트 디렉토리로 설정
+  //   "paths": {}
+  // }
 }
