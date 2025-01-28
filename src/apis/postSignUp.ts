@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://yourapi.com';
+const API_BASE_URL =
+  'http://ec2-54-180-103-157.ap-northeast-2.compute.amazonaws.com:8080';
 
-export const postEmailVerification = async (
+export const postSignUp = async (
   loginId: string,
   password: string,
   firstName: string,
@@ -14,7 +15,7 @@ export const postEmailVerification = async (
     password,
     firstName,
     lastName,
-    birthDate
+    birthDate,
   });
   return response.data;
 };
