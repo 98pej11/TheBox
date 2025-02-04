@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {UserInfo} from '../types/accountTypes';
 
 const API_BASE_URL =
   'http://ec2-54-180-103-157.ap-northeast-2.compute.amazonaws.com:8080';
@@ -6,16 +7,12 @@ const API_BASE_URL =
 export const postSignUp = async (
   loginId: string,
   password: string,
-  firstName: string,
-  lastName: string,
-  birthDate: Date,
+  userInfo: UserInfo,
 ) => {
-  const response = await axios.post(`${API_BASE_URL}/users`, {
+  const response = await axios.post(`${API_BASE_URL}/users/sign-up`, {
     loginId,
     password,
-    firstName,
-    lastName,
-    birthDate,
+    userInfo,
   });
   return response.data;
 };

@@ -1,21 +1,12 @@
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  TextInput,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  ScrollView,
-  Platform,
-  Keyboard,
-} from 'react-native';
+import {TouchableOpacity, View, Text, TextInput} from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 
 import {styles as S} from './Create.styles';
 import React, {useState} from 'react';
-import {RootStackParamList} from '@src/types/navigationTypes';
+import {RootStackParamList} from '../../types/navigationTypes';
+import {accountStore} from '../../stores/accountStore';
 
 export default function PhoneNumber() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -42,7 +33,8 @@ export default function PhoneNumber() {
           />
           <TextInput
             placeholder="Number or Email"
-            keyboardType="email-address" // 이메일 입력 시 사용
+            keyboardType="email-address"
+            onChangeText={text => accountStore.setLoginId(text)} // store의 값 변경
           />
         </View>
       </View>
@@ -50,7 +42,10 @@ export default function PhoneNumber() {
         <Text style={S.textB}>Terms of service and policy</Text>
         <TouchableOpacity
           style={S.buttonB}
-          onPress={() => navigation.navigate('Verification', {from: 'number'})}>
+          onPress={() => {
+            console.log(accountStore.loginId);
+            navigation.navigate('Verification', {from: 'number'});
+          }}>
           <Text style={S.buttonTextB}>Continue</Text>
         </TouchableOpacity>
       </View>

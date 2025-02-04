@@ -3,7 +3,8 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 
 import {styles as S} from './Create.styles';
-import {RootStackParamList} from '@src/types/navigationTypes';
+import {RootStackParamList} from '../../types/navigationTypes';
+import {accountStore} from '../../stores/accountStore';
 
 export default function Name() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -15,12 +16,14 @@ export default function Name() {
         <TextInput
           style={S.inputField}
           placeholder="first name"
-          keyboardType="default" // 일반적인 키보드 타입
+          keyboardType="default"
+          onChangeText={text => accountStore.setFirstName(text)}
         />
         <TextInput
           style={S.inputField}
           placeholder="last name"
-          keyboardType="default" // 일반적인 키보드 타입
+          keyboardType="default"
+          onChangeText={text => accountStore.setLastName(text)}
         />
       </View>
       <View style={S.buttonBox}>

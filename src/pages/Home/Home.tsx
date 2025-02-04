@@ -18,7 +18,7 @@ export default function Home() {
         </TouchableOpacity>
         <TouchableOpacity
           style={S.buttonB}
-          onPress={() => navigation.navigate('PhoneNumber')}>
+          onPress={() => navigation.navigate('Email')}>
           <Text style={S.buttonTextB}>Create on Account</Text>
         </TouchableOpacity>
       </View>

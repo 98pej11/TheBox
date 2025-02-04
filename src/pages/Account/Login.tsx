@@ -19,7 +19,8 @@ export default observer(function Login() {
   };
 
   const handleLogin = () => {
-    accountStore.setLogin();
+    // accountStore.setLogin();
+    // accountStore.setSignUp();
   };
 
   return (
