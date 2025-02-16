@@ -5,9 +5,13 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {styles as S} from './Create.styles';
 import {RootStackParamList} from '../../types/navigationTypes';
 import {accountStore} from '../../stores/accountStore';
+import {observer} from 'mobx-react-lite';
 
-export default function Name() {
+export default observer(function Name() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
+  const isValid =
+    accountStore.userInfo.firstName && accountStore.userInfo.lastName;
 
   return (
     <View style={S.container}>
@@ -17,22 +21,25 @@ export default function Name() {
           style={S.inputField}
           placeholder="first name"
           keyboardType="default"
-          onChangeText={text => accountStore.setFirstName(text)}
+          value={accountStore.userInfo.firstName}
+          onChangeText={text => (accountStore.userInfo.firstName = text)}
         />
         <TextInput
           style={S.inputField}
           placeholder="last name"
           keyboardType="default"
-          onChangeText={text => accountStore.setLastName(text)}
+          value={accountStore.userInfo.lastName}
+          onChangeText={text => (accountStore.userInfo.lastName = text)}
         />
       </View>
       <View style={S.buttonBox}>
         <TouchableOpacity
-          style={S.buttonB}
+          style={isValid ? S.buttonA : S.buttonB}
+          disabled={!isValid}
           onPress={() => navigation.navigate('Birthday')}>
-          <Text style={S.buttonTextB}>Continue</Text>
+          <Text style={isValid ? S.buttonTextA : S.buttonTextB}>Continue</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-}
+});

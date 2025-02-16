@@ -38,6 +38,17 @@ export const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 40,
   },
+  buttonA: {
+    color: '#fff',
+    backgroundColor: '#007AFF',
+    height: 50,
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 40,
+    justifyContent: 'center', // 세로 방향 가운데 정렬
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
   buttonB: {
     backgroundColor: '#fff',
     borderColor: '#cdcbcb', // 테두리 색상 설정
@@ -82,5 +93,15 @@ export const styles = StyleSheet.create({
   countryCodeText: {
     fontSize: 18,
     color: '#333',
+  },
+  pickerBox: {
+    flexDirection: 'row', // 가로로 배치
+    justifyContent: 'space-between', // 공간을 고르게 분배
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  separator: {
+    fontSize: 20,
+    marginHorizontal: 10,
   },
 });

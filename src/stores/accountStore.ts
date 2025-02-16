@@ -62,13 +62,13 @@ class AccountStore {
     this.password = value;
   }
 
-  setFirstName(value: string) {
-    this.userInfo.firstName = value;
-  }
+  // setFirstName(value: string) {
+  //   this.userInfo.firstName = value;
+  // }
 
-  setLastName(value: string) {
-    this.userInfo.lastName = value;
-  }
+  // setLastName(value: string) {
+  //   this.userInfo.lastName = value;
+  // }
 
   sendEmailCode() {
     console.log(this.userInfo.email);
@@ -83,6 +83,7 @@ class AccountStore {
         console.log('실패', error);
       });
   }
+
   setLogin() {
     postLogin(this.loginId, this.password);
   }
