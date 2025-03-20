@@ -10,4 +10,6 @@ export type RootStackParamList = {
   Login: undefined; // Login 스크린 추가
   PhoneNumber: undefined;
   Birthday: undefined;
+  MyFeed: undefined;
+  Friends: undefined;
 };

@@ -6,9 +6,10 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {styles as S} from './Login.styles';
 import {useState} from 'react';
 import {accountStore} from '../../stores/accountStore';
+import {RootStackParamList} from '../../types/navigationTypes';
 
 export default observer(function Login() {
-  //   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleIdChange = (value: string) => {
     accountStore.loginId = value; // Store의 email 업데이트
@@ -21,6 +22,7 @@ export default observer(function Login() {
   const handleLogin = () => {
     // accountStore.setLogin();
     // accountStore.setSignUp();
+    navigation.navigate('MyFeed');
   };
 
   return (

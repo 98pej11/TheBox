@@ -3,13 +3,14 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {styles as S} from './Home.styles';
 import {RootStackParamList} from '../../types/navigationTypes';
+import Footer from '../Main/Footer';
 
 export default function Home() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   return (
     <View style={S.container}>
-      <Text>App Logo</Text>
+      {/* <Text>App Logo</Text> */}
       <View style={S.buttonBox}>
         <TouchableOpacity
           style={S.buttonA}
