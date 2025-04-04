@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
   },
   linkContainer: {
     paddingHorizontal: 40,
+    // marginTop: 20,
     marginBottom: 15,
   },
   linkText: {
