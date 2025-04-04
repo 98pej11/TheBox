@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
   },
-
   textA: {
     marginTop: 5,
     fontSize: 16,

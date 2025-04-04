@@ -2,51 +2,30 @@ import {action, runInAction, makeAutoObservable} from 'mobx';
 
 import {postLogin} from '../apis/postLogin';
 import {postSignUp} from '../apis/postSignUp';
-import {UserInfo} from '../types/accountTypes';
+import {UserInfo, UserProfile} from '../types/accountTypes';
 import {postEmailCode} from '../apis/postEmailCode';
+import {getMyProfile} from '../apis/getMyProfile';
 
 class AccountStore {
-  private _loginId: string = 'abc@gmail.com';
-  private _password: string = 'password';
-  private _userInfo: UserInfo = {
-    firstName: 'ㅇㅇ',
-    lastName: 'ㅇㅇ',
-    email: 'abc@gmail.com',
-    phoneNumber: '01011112222',
-    birthday: '2000-01-12',
+  loginId: string = '98pej11@gmail.com';
+  password: string = 'asdfasdf';
+  userInfo: UserInfo = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    birthday: '',
   };
-  private _digitCode: string = '';
+  digitCode: string = '';
+  accessToken: string = '';
+  userProfile: UserProfile = {
+    profileMessage: '',
+    profileImageUrl: '',
+    profileLink: '',
+  };
 
   constructor() {
     makeAutoObservable(this, {setLogin: action});
-  }
-
-  public get loginId(): string {
-    return this._loginId;
-  }
-  public set loginId(value: string) {
-    this._loginId = value;
-  }
-
-  public get password(): string {
-    return this._password;
-  }
-  public set password(value: string) {
-    this._password = value;
-  }
-
-  public get userInfo(): UserInfo {
-    return this._userInfo;
-  }
-  public set userInfo(value: UserInfo) {
-    this._userInfo = value;
-  }
-
-  public get digitCode(): string {
-    return this._digitCode;
-  }
-  public set digitCode(value: string) {
-    this._digitCode = value;
   }
 
   setLoginId(id: string) {
@@ -84,10 +63,22 @@ class AccountStore {
       });
   }
 
+  // 로그인
   setLogin() {
-    postLogin(this.loginId, this.password);
+    postLogin(this.loginId, this.password)
+      .then((res: any) => {
+        console.log('성공', res);
+        runInAction(() => {
+          console.log(res);
+          this.accessToken = res.accessToken;
+        });
+      })
+      .catch(error => {
+        console.log('실패', error);
+      });
   }
 
+  // 회원가입
   setSignUp() {
     console.log('요청', this.loginId, this.password, this.userInfo);
     postSignUp(this.loginId, this.password, this.userInfo)
@@ -101,6 +92,32 @@ class AccountStore {
         console.log('실패', error);
         runInAction(() => {});
       });
+  }
+
+  async fetchProfile() {
+    try {
+      const response = await getMyProfile();
+      console.log(response);
+
+      // 안전하게 값을 할당 (null이나 undefined여도 오류 없이 처리)
+      this.loginId = response.loginId || '';
+      this.userInfo = {...response.userInfo};
+      this.userProfile = {...response.userProfile};
+      // console.log(response.userInfo);
+      // userProfile이 존재하는지 확인 후 값 할당
+    } catch (error) {
+      console.error('프로필 불러오기 실패:', error);
+    }
+  }
+
+  updateProfile(
+    profileImageUrl: string,
+    profileMessage: string,
+    profileLink: string,
+  ) {
+    this.userProfile.profileImageUrl = profileImageUrl;
+    this.userProfile.profileMessage = profileMessage;
+    this.userProfile.profileLink = profileLink;
   }
 }
 

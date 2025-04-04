@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,24 @@ import {
 import Footer from './Footer';
 import Header from './Header';
 import Profile from './MyProfile';
+import PostList from './PostList';
+import {observer} from 'mobx-react-lite';
+import {accountStore} from '../../stores/accountStore';
 
-export default function MyFeed() {
+export default observer(function MyFeed() {
+  useEffect(() => {
+    accountStore.fetchProfile();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <Profile />
+      <PostList />
       <Footer />
     </SafeAreaView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

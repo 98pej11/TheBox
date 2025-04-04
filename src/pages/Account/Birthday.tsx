@@ -6,8 +6,10 @@ import {Picker} from '@react-native-picker/picker';
 import {styles as S} from './Create.styles';
 import {RootStackParamList} from '../../types/navigationTypes';
 import {useState} from 'react';
+import {accountStore} from '../../stores/accountStore';
+import {observer} from 'mobx-react-lite';
 
-export default function Birthday() {
+export default observer(function Birthday() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [selectedYear, setSelectedYear] = useState('2000');
   const [selectedMonth, setSelectedMonth] = useState('1');
@@ -69,6 +71,8 @@ export default function Birthday() {
         <TouchableOpacity
           style={S.buttonA}
           onPress={() => {
+            console.log(accountStore.userInfo);
+            accountStore.setSignUp();
             Alert.alert('Registration successful.');
             navigation.reset({
               index: 0, // 새로운 스택의 첫 번째 화면으로 설정
@@ -80,4 +84,4 @@ export default function Birthday() {
       </View>
     </View>
   );
-}
+});

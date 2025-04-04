@@ -6,3 +6,9 @@ export type UserInfo = {
   phoneNumber: string;
   birthday: string;
 };
+
+export type UserProfile = {
+  profileMessage: string;
+  profileImageUrl: string;
+  profileLink: string;
+};

@@ -7,7 +7,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
 } from 'react-native';
-import CameraIcon from '../../statics/icons/semi_camera.svg'; // 아이콘 경로는 예시입니다.
+import CameraIcon from '../../statics/icons/semi_camera.svg';
 import MenuIcon from '../../statics/icons/menu.svg'; // 같은 방식으로 아이콘 가져오기
 import UserIcon from '../../statics/icons/menu_user.svg'; // 계정 관리 아이콘 예시
 import LogoutIcon from '../../statics/icons/menu_logout.svg'; // 로그아웃 아이콘 예시

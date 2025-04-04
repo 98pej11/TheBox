@@ -36,7 +36,14 @@ export default observer(function Name() {
         <TouchableOpacity
           style={isValid ? S.buttonA : S.buttonB}
           disabled={!isValid}
-          onPress={() => navigation.navigate('Birthday')}>
+          onPress={() => {
+            console.log(
+              accountStore.userInfo.firstName +
+                ' ' +
+                accountStore.userInfo.lastName,
+            );
+            navigation.navigate('Birthday');
+          }}>
           <Text style={isValid ? S.buttonTextA : S.buttonTextB}>Continue</Text>
         </TouchableOpacity>
       </View>

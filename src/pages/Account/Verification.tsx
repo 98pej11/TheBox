@@ -36,15 +36,15 @@ export default observer(function Verification() {
           style={isValid ? S.buttonA : S.buttonB}
           onPress={() => {
             console.log(accountStore.userInfo.email, accountStore.digitCode);
-            // postEmailVerification(
-            //   accountStore.userInfo.email,
-            //   accountStore.digitCode,
-            // ).then((res: any) => {
-            //   console.log('성공', res);
-            //   runInAction(() => {
-            //     console.log(res);
-            //   });
-            // });
+            postEmailVerification(
+              accountStore.userInfo.email,
+              accountStore.digitCode,
+            ).then((res: any) => {
+              console.log('성공', res);
+              runInAction(() => {
+                console.log(res);
+              });
+            });
             if (from === 'email') {
               navigation.navigate('Password');
             } else if (from === 'number') {

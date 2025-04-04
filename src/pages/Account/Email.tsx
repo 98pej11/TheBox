@@ -36,7 +36,6 @@ export default function Email() {
           keyboardType="email-address"
           autoCapitalize="none" // 대문자 변경 방지
           onChangeText={handleEmailChange}
-          // onChangeText={text => accountStore.setLoginId(text)}
         />
       </View>
       <View style={S.buttonBox}>
@@ -46,7 +45,7 @@ export default function Email() {
           disabled={!isValid}
           onPress={() => {
             console.log(accountStore.loginId);
-            // accountStore.sendEmailCode();
+            accountStore.sendEmailCode();
             navigation.navigate('Verification', {from: 'email'});
           }}>
           <Text style={isValid ? S.buttonTextA : S.buttonTextB}>Continue</Text>

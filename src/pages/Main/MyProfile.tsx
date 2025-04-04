@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,113 +12,70 @@ import PlusFriendIcon from '../../statics/icons/plus_friend.svg';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types/navigationTypes';
-import axios from 'axios';
-import {launchImageLibrary} from 'react-native-image-picker';
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import {putMyProfile} from '../../apis/putMyProfile';
-import {postImgUpload} from '../../apis/postImgUpload';
+import {observer} from 'mobx-react-lite';
+import {accountStore} from '../../stores/accountStore';
 
-const MyProfile = () => {
+export default observer(function MyProfile() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleLinkPress = () => {
-    Linking.openURL('https://www.naver.com');
+    Linking.openURL(accountStore.userProfile.profileLink);
   };
 
   const handleFriendsButtonPress = () => {
     navigation.navigate('Friends');
   };
 
-  // 권한 요청 함수
-  const requestGalleryPermission = async () => {
-    try {
-      const result = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
-      if (result === RESULTS.GRANTED) {
-        openGallery();
-      } else {
-        console.log('Permission denied');
-      }
-    } catch (error) {
-      console.error('Permission error: ', error);
-    }
-  };
+  // 프로필 이미지가 있는지 확인
+  const hasProfileImage = accountStore.userProfile.profileImageUrl !== '';
 
-  // 갤러리에서 이미지 선택 후 업로드
-  const openGallery = () => {
-    launchImageLibrary({mediaType: 'photo'}, async response => {
-      if (response.didCancel) {
-        console.log('User canceled image picker');
-      } else if (response.errorCode) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const selectedAsset = response.assets[0];
-        const {uri, fileName, fileSize, type} = selectedAsset;
+  // 소개글이 없으면 하이픈 처리
+  const profileMessage =
+    accountStore.userProfile.profileMessage !== ''
+      ? accountStore.userProfile.profileMessage
+      : '-';
 
-        if (!fileName || !fileSize || !type) {
-          console.log('Invalid file data');
-          return;
-        }
-
-        try {
-          // Step 1: Pre-signed URL 요청
-          const {filePath, preSignedUrl} = await postImgUpload(
-            fileName,
-            fileSize,
-            type,
-          );
-
-          if (!filePath || !preSignedUrl) {
-            throw new Error('Pre-signed URL 요청 실패');
-          }
-
-          // Step 2: S3에 이미지 업로드
-          await axios.put(
-            preSignedUrl,
-            {
-              uri,
-              type,
-              name: fileName,
-            },
-            {
-              headers: {
-                'Content-Type': type,
-                'Content-Length': fileSize.toString(),
-              },
-            },
-          );
-
-          await putMyProfile(filePath, '프로필 업데이트 완료');
-          console.log('프로필 업데이트 성공');
-        } catch (error) {
-          console.error('업로드 실패:', error);
-        }
-      } else {
-        console.log('No image selected');
-      }
-    });
-  };
+  // 링크가 있는지 확인
+  const hasProfileLink = accountStore.userProfile.profileLink !== '';
 
   return (
     <View style={styles.container}>
-      <View style={styles.totalBox}>
-        <View style={styles.introduceBox}>
-          <Text style={styles.nickname}>eunjung</Text>
-          <Text style={styles.textA}>Frontend Developer</Text>
-          <Text style={styles.linkText} onPress={handleLinkPress}>
-            www.naver.com
+      <View style={[styles.totalBox, !hasProfileLink && styles.totalBoxNoLink]}>
+        <View>
+          <Text style={styles.nickname}>
+            {accountStore.userInfo.lastName} {accountStore.userInfo.firstName}
           </Text>
+          <Text style={styles.introduce}>{profileMessage}</Text>
         </View>
         <View style={styles.profileBox}>
-          <Image
-            source={require('../../statics/sky.jpg')}
-            style={styles.profileImage}
-          />
+          {hasProfileImage ? (
+            <Image
+              source={{uri: accountStore.userProfile.profileImageUrl}}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.defaultProfileContainer}>
+              <Text style={styles.defaultProfileText}>no profile</Text>
+            </View>
+          )}
         </View>
       </View>
+
+      {/* 링크가 있을 때만 링크 컨테이너 표시 */}
+      {hasProfileLink && (
+        <View style={styles.linkContainer}>
+          <Text style={styles.linkText} onPress={handleLinkPress}>
+            {accountStore.userProfile.profileLink}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={requestGalleryPermission}>
+          onPress={() => {
+            navigation.navigate('ProfileEdit');
+          }}>
           <Text style={styles.buttonText}>프로필 관리</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -128,12 +85,9 @@ const MyProfile = () => {
         </TouchableOpacity>
         <PlusFriendIcon />
       </View>
-      <View style={styles.buttonContainer}>
-        <Text>no datas</Text>
-      </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -144,53 +98,54 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 5,
   },
   totalBox: {
     paddingHorizontal: 40,
-    flexDirection: 'row', // introduceBox와 profileBox를 수평으로 배치
-    justifyContent: 'space-between', // 양 끝으로 배치
-    alignItems: 'center', // 수직으로 가운데 정렬
-    marginBottom: 20, // 아래 여백
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0, // 기본 마진
+  },
+  totalBoxNoLink: {
+    marginBottom: 10, // 링크가 없을 때 추가 마진
   },
   profileBox: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     backgroundColor: '#fff',
     height: 100,
   },
-  introduceBox: {
-    // marginTop: 15,
-    gap: 15,
-  },
+  introduceBox: {},
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    marginRight: 20,
-  },
-  stat: {
+  defaultProfileContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 30,
+    overflow: 'hidden',
   },
-  statCount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
+  defaultProfileText: {
     fontSize: 14,
-    color: '#888',
+    color: '#777',
+    fontWeight: '500',
   },
-
-  textA: {
+  introduce: {
     marginTop: 5,
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+  },
+  linkContainer: {
+    paddingHorizontal: 40,
+    marginBottom: 15,
   },
   linkText: {
     fontSize: 16,
@@ -201,7 +156,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    marginTop: 20,
+    marginTop: 10,
   },
   button: {
     paddingHorizontal: 40,
@@ -216,5 +171,3 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
-
-export default MyProfile;

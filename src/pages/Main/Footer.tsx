@@ -5,6 +5,8 @@ import CameraIcon from '../../statics/icons/camera.svg';
 import MapIcon from '../../statics/icons/map.svg';
 import ChatIcon from '../../statics/icons/chat.svg';
 import UserIcon from '../../statics/icons/user.svg';
+import {observer} from 'mobx-react-lite';
+import {accountStore} from '../../stores/accountStore';
 
 const icons = [
   {Icon: MapIcon, label: 'Map'},
@@ -13,7 +15,10 @@ const icons = [
   {Icon: UserIcon, label: 'Settings'},
 ];
 
-const Footer = () => {
+// Footer 컴포넌트 내에서 상태 확인
+const Footer = observer(() => {
+  const hasProfileImage = accountStore.userProfile.profileImageUrl !== '';
+
   return (
     <View style={styles.footer}>
       {icons.map(({Icon, label}, index) => (
@@ -23,14 +28,20 @@ const Footer = () => {
         </TouchableOpacity>
       ))}
       <TouchableOpacity>
-        <Image
-          source={require('../../statics/sky.jpg')}
-          style={styles.profileImage}
-        />
+        {hasProfileImage ? (
+          <Image
+            source={{uri: accountStore.userProfile.profileImageUrl}}
+            style={styles.profileImage}
+          />
+        ) : (
+          <View style={styles.defaultProfileContainer}>
+            <Text style={styles.defaultProfileText}>no profile</Text>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   footer: {
@@ -57,6 +68,20 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 20, // 동그랗게 만들기
+  },
+  defaultProfileContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 20, // 동그랗게 만들기
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  defaultProfileText: {
+    fontSize: 5,
+    color: '#777',
+    fontWeight: '500',
   },
 });
 

@@ -14,6 +14,7 @@ import Password from './src/pages/Account/Password';
 import Name from './src/pages/Account/Name';
 import Birthday from './src/pages/Account/Birthday';
 import MyFeed from './src/pages/Main/MyFeed';
+import ProfileEdit from './src/pages/Main/ProfileEdit';
 import Friends from './src/pages/Main/Friends';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -76,6 +77,11 @@ function App(): React.JSX.Element {
           name="MyFeed"
           component={MyFeed}
           options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="ProfileEdit"
+          component={ProfileEdit}
+          options={{headerTitle: 'Edit', headerBackTitle: ''}}
         />
         <Stack.Screen
           name="Friends"

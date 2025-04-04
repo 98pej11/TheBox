@@ -11,5 +11,6 @@ export type RootStackParamList = {
   PhoneNumber: undefined;
   Birthday: undefined;
   MyFeed: undefined;
+  ProfileEdit: undefined;
   Friends: undefined;
 };

@@ -1,5 +1,5 @@
 import {TouchableOpacity, View, Text, TextInput} from 'react-native';
-import {observer} from 'mobx-react-lite';
+// import {observer} from 'mobx-react-lite';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 
@@ -7,6 +7,7 @@ import {styles as S} from './Login.styles';
 import {useState} from 'react';
 import {accountStore} from '../../stores/accountStore';
 import {RootStackParamList} from '../../types/navigationTypes';
+import {observer} from 'mobx-react-lite';
 
 export default observer(function Login() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -20,8 +21,7 @@ export default observer(function Login() {
   };
 
   const handleLogin = () => {
-    // accountStore.setLogin();
-    // accountStore.setSignUp();
+    accountStore.setLogin();
     navigation.navigate('MyFeed');
   };
 
