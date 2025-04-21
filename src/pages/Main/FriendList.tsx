@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -7,50 +7,64 @@ import {
   TextInput,
   Image,
   FlatList,
+  Alert,
 } from 'react-native';
 import Footer from './Footer';
 import SearchIcon from '../../statics/icons/search.svg';
 import XIcon from '../../statics/icons/x.svg';
 import SendIcon from '../../statics/icons/send_friend.svg'; // 전송 아이콘
 import DeleteIcon from '../../statics/icons/delete_friend.svg'; // 삭제 아이콘
+import {friendsStore} from '../../stores/friendsStore';
+import {observer} from 'mobx-react-lite';
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RootStackParamList} from '../../types/navigationTypes';
+import {Friend} from '../../types/friendTypes';
 
-// Define the type for each friend object
-interface Friend {
-  id: string;
-  name: string;
-  imageUrl: string;
-}
-
-export default function Friends() {
+export default observer(function FriendList() {
   const [searchText, setSearchText] = useState(''); // 입력값을 관리하는 상태
+  const [filteredFriends, setFilteredFriends] = useState<Friend[]>(
+    friendsStore.friendList,
+  ); // 필터링된 친구 목록
+
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    friendsStore.fetchFriendList();
+  }, []);
+
+  useEffect(() => {
+    if (searchText === '') {
+      setFilteredFriends(friendsStore.friendList); // 검색 텍스트가 비어있으면 전체 목록 표시
+    } else {
+      setFilteredFriends(
+        friendsStore.friendList.filter(friend =>
+          `${friend.lastName} ${friend.firstName}`
+            .toLowerCase()
+            .includes(searchText.toLowerCase()),
+        ),
+      );
+    }
+  }, [searchText, friendsStore.friendList]);
 
   const handleClearText = () => {
     setSearchText(''); // 입력값 초기화
   };
 
-  const friendsData = [
-    {
-      id: '1',
-      name: 'John Doe',
-      imageUrl: 'https://randomuser.me/api/portraits/men/10.jpg',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      imageUrl: 'https://randomuser.me/api/portraits/women/5.jpg',
-    },
-    {
-      id: '3',
-      name: 'Sam Wilson',
-      imageUrl: 'https://randomuser.me/api/portraits/men/20.jpg',
-    },
-    // 추가 친구 데이터
-  ];
-
   const renderFriendItem = ({item}: {item: Friend}) => (
     <View style={styles.friendItem}>
-      <Image source={{uri: item.imageUrl}} style={styles.profileImage} />
-      <Text style={styles.friendName}>{item.name}</Text>
+      <TouchableOpacity
+        style={{flexDirection: 'row', alignItems: 'center'}}
+        onPress={() => {
+          friendsStore.fetchFriendProfile(item.id).then(() => {
+            navigation.navigate('FriendFeed');
+          });
+        }}>
+        <Image source={{uri: item.imageUrl}} style={styles.profileImage} />
+        <Text style={styles.friendName}>
+          {item.lastName} {item.firstName}
+        </Text>
+      </TouchableOpacity>
       <View style={styles.actionButtons}>
         <TouchableOpacity
           onPress={() => handleSend(item.id)}
@@ -70,8 +84,25 @@ export default function Friends() {
     console.log('Send to', id);
   };
 
-  const handleDelete = (id: any) => {
-    console.log('Delete friend with ID:', id);
+  const handleDelete = (id: number) => {
+    Alert.alert(
+      '친구 삭제',
+      '정말 삭제하시겠습니까?',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '삭제',
+          onPress: () => {
+            console.log('Delete friend:', id);
+            friendsStore.deleteFriend(id);
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   return (
@@ -84,9 +115,9 @@ export default function Friends() {
         <TextInput
           style={styles.input}
           placeholder="search your friend"
-          placeholderTextColor="#888" // placeholder 텍스트 색상
-          value={searchText} // 상태값을 입력에 연결
-          onChangeText={setSearchText} // 입력값 변경 시 상태 업데이트
+          placeholderTextColor="#888"
+          value={searchText}
+          onChangeText={setSearchText}
         />
         {searchText.length > 0 && (
           <TouchableOpacity
@@ -97,17 +128,18 @@ export default function Friends() {
         )}
       </View>
       <View>
-        <Text style={styles.listTitle}>Your Friends (3/20)</Text>
+        <Text style={styles.listTitle}>
+          Your Friends ({filteredFriends.length}/{friendsStore.friendCount})
+        </Text>
         <FlatList
-          data={friendsData}
+          data={filteredFriends} // 필터링된 목록을 FlatList에 전달
           renderItem={renderFriendItem}
-          keyExtractor={item => item.id}
         />
       </View>
       <Footer />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

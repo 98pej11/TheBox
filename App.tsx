@@ -15,7 +15,8 @@ import Name from './src/pages/Account/Name';
 import Birthday from './src/pages/Account/Birthday';
 import MyFeed from './src/pages/Main/MyFeed';
 import ProfileEdit from './src/pages/Main/ProfileEdit';
-import Friends from './src/pages/Main/Friends';
+import FriendList from './src/pages/Main/FriendList';
+import FriendFeed from './src/pages/Main/FriendFeed';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const DevSettings = NativeModules.DevSettings;
@@ -84,9 +85,14 @@ function App(): React.JSX.Element {
           options={{headerTitle: 'Edit', headerBackTitle: ''}}
         />
         <Stack.Screen
-          name="Friends"
-          component={Friends}
-          options={{headerTitle: 'Friend management', headerBackTitle: ''}}
+          name="FriendList"
+          component={FriendList}
+          options={{headerTitle: 'Friends', headerBackTitle: ''}}
+        />
+        <Stack.Screen
+          name="FriendFeed"
+          component={FriendFeed}
+          options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -23,7 +23,7 @@ export default observer(function MyProfile() {
   };
 
   const handleFriendsButtonPress = () => {
-    navigation.navigate('Friends');
+    navigation.navigate('FriendList');
   };
 
   // 프로필 이미지가 있는지 확인

@@ -1,14 +1,9 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
+import React, {useEffect} from 'react';
+import {StyleSheet, SafeAreaView} from 'react-native';
 import Footer from './Footer';
 import Header from './Header';
 import Profile from './FriendProfile';
+import {friendsStore} from '../../stores/friendsStore';
 
 export default function FriendFeed() {
   return (

@@ -94,7 +94,7 @@ class AccountStore {
       });
   }
 
-  async fetchProfile() {
+  async fetchMyProfile() {
     try {
       const response = await getMyProfile();
       console.log(response);

@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Image,
 } from 'react-native';
 import postStore from '../../stores/postStore';
 import MyPostIcon from '../../statics/icons/my_post.svg';
 import MentionPostIcon from '../../statics/icons/mention_post.svg';
+import {accountStore} from '../../stores/accountStore';
 
 interface Post {
   id: number;
@@ -25,24 +27,26 @@ export default observer(function PostList() {
   const [activeTab, setActiveTab] = useState('my_page');
 
   useEffect(() => {
-    postStore.fetchPosts(activeTab);
-  }, [activeTab]);
+    if (accountStore.accessToken) {
+      postStore.fetchPosts(activeTab);
+    }
+  }, [activeTab, accountStore.accessToken]);
 
   const handleTabPress = (tab: string) => {
     setActiveTab(tab);
   };
 
-  const renderItem = ({item}: {item: Post}) => (
-    <View style={styles.postItem}>
-      <Text style={styles.postText}>{item.text}</Text>
-      {item.content && (
-        <View style={styles.postContent}>
-          <Text>Type: {item.content.contentType}</Text>
-          <Text>{item.content.contentUrl}</Text>
-        </View>
-      )}
-    </View>
-  );
+  const renderItem = ({item}: {item: Post}) =>
+    item.content?.contentUrl ? (
+      <View style={styles.imageContainer}>
+        <Image
+          source={{uri: item.content.contentUrl}}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      </View>
+    ) : null;
+
   return (
     <View style={styles.container}>
       {/* 탭 네비게이션 */}
@@ -73,7 +77,6 @@ export default observer(function PostList() {
             renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
             numColumns={3}
-            columnWrapperStyle={styles.columnWrapper}
             ListEmptyComponent={
               <Text style={styles.emptyMessage}>게시물이 없습니다.</Text>
             }
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -109,7 +112,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 10,
   },
   postItem: {
     flex: 1,
@@ -140,7 +142,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666666',
   },
-  columnWrapper: {
-    justifyContent: 'space-between',
+  imageContainer: {
+    flex: 1,
+    aspectRatio: 1, // 정사각형
+    margin: 1,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 4,
   },
 });

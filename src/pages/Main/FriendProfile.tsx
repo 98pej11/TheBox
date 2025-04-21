@@ -11,44 +11,68 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types/navigationTypes';
+import {friendsStore} from '../../stores/friendsStore';
 
 const FriendProfile = () => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  // const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleLinkPress = () => {
-    Linking.openURL('https://www.naver.com'); // URL 클릭 시 열리는 링크
+    Linking.openURL(friendsStore.userProfile.profileLink);
   };
+
+  // 프로필 이미지가 있는지 확인
+  const hasProfileImage = friendsStore.userProfile.profileImageUrl !== '';
+
+  // 소개글이 없으면 하이픈 처리
+  const profileMessage =
+    friendsStore.userProfile.profileMessage !== ''
+      ? friendsStore.userProfile.profileMessage
+      : '-';
+
+  // 링크가 있는지 확인
+  const hasProfileLink = friendsStore.userProfile.profileLink !== '';
 
   return (
     <View style={styles.container}>
-      <View style={styles.totalBox}>
-        <View style={styles.introduceBox}>
-          <View>
-            <Text style={styles.nickname}>eunjung</Text>
-            <Text style={styles.textA}>Frontend Developer</Text>
-          </View>
-          <Text
-            style={styles.linkText}
-            onPress={handleLinkPress} // 클릭 시 링크 열기
-          >
-            www.naver.com
+      <View style={[styles.totalBox, !hasProfileLink && styles.totalBoxNoLink]}>
+        <View>
+          <Text style={styles.nickname}>
+            {friendsStore.userInfo.lastName} {friendsStore.userInfo.firstName}
           </Text>
+          <Text style={styles.introduce}>{profileMessage}</Text>
         </View>
         <View style={styles.profileBox}>
-          {/* 왼쪽: 프로필 사진 */}
-          <Image
-            source={require('../../statics/sky.jpg')}
-            style={styles.profileImage}
-          />
+          {hasProfileImage ? (
+            <Image
+              source={{uri: friendsStore.userProfile.profileImageUrl}}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.defaultProfileContainer}>
+              <Text style={styles.defaultProfileText}>no profile</Text>
+            </View>
+          )}
         </View>
       </View>
+
+      {/* 링크가 있을 때만 링크 컨테이너 표시 */}
+      {hasProfileLink && (
+        <View style={styles.linkContainer}>
+          <Text style={styles.linkText} onPress={handleLinkPress}>
+            {friendsStore.userProfile.profileLink}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            // 메세지 보내기 예정
+            // navigation.navigate('');
+          }}>
           <Text style={styles.buttonText}>메세지 보내기</Text>
         </TouchableOpacity>
-      </View>
-      <View style={styles.buttonContainer}>
-        <Text>no datas</Text>
       </View>
     </View>
   );
@@ -63,52 +87,55 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 5,
   },
   totalBox: {
     paddingHorizontal: 40,
-    flexDirection: 'row', // introduceBox와 profileBox를 수평으로 배치
-    justifyContent: 'space-between', // 양 끝으로 배치
-    alignItems: 'center', // 수직으로 가운데 정렬
-    marginBottom: 20, // 아래 여백
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0, // 기본 마진
+  },
+  totalBoxNoLink: {
+    marginBottom: 10, // 링크가 없을 때 추가 마진
   },
   profileBox: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     backgroundColor: '#fff',
     height: 100,
   },
-  introduceBox: {
-    // marginTop: 15,
-    gap: 15,
-  },
+  introduceBox: {},
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    marginRight: 20,
-  },
-  stat: {
+  defaultProfileContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#EFEFEF',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 30,
+    overflow: 'hidden',
   },
-  statCount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
+  defaultProfileText: {
     fontSize: 14,
-    color: '#888',
+    color: '#777',
+    fontWeight: '500',
   },
-  textA: {
+  introduce: {
     marginTop: 5,
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+  },
+  linkContainer: {
+    paddingHorizontal: 40,
+    // marginTop: 20,
+    marginBottom: 15,
   },
   linkText: {
     fontSize: 16,
@@ -119,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    marginTop: 20,
+    marginTop: 10,
   },
   button: {
     paddingHorizontal: 40,

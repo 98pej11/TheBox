@@ -1,11 +1,5 @@
 import React, {useEffect} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
+import {StyleSheet, SafeAreaView} from 'react-native';
 import Footer from './Footer';
 import Header from './Header';
 import Profile from './MyProfile';
@@ -15,8 +9,10 @@ import {accountStore} from '../../stores/accountStore';
 
 export default observer(function MyFeed() {
   useEffect(() => {
-    accountStore.fetchProfile();
-  }, []);
+    if (accountStore.accessToken) {
+      accountStore.fetchMyProfile();
+    }
+  }, [accountStore.accessToken]);
 
   return (
     <SafeAreaView style={styles.container}>
