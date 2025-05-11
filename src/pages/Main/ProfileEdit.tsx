@@ -66,33 +66,42 @@ const ProfileEdit = observer(() => {
           const {filePath, preSignedUrl} = await postImgUpload(
             fileName,
             fileSize,
-            type,
+            'PROFILE_IMAGE',
           );
-
+          console.log('preSignedUrl:', preSignedUrl);
           if (!filePath || !preSignedUrl) {
             throw new Error('Pre-signed URL 요청 실패');
           }
+          if (!uri) {
+            throw new Error('이미지 URI가 없습니다');
+          }
 
-          // Step 2: S3에 이미지 업로드
-          await axios.put(
-            preSignedUrl,
-            {
-              uri,
-              type,
-              name: fileName,
-            },
-            {
+          const fetchResponse = await fetch(uri);
+          console.log(fetchResponse);
+          const blob = await fetchResponse.blob();
+          console.log(blob);
+
+          try {
+            const response = await fetch(preSignedUrl, {
+              method: 'PUT',
               headers: {
                 'Content-Type': type,
                 'Content-Length': fileSize.toString(),
               },
-            },
-          );
+              body: blob,
+            });
 
-          // Step 3: 프로필 업데이트
-          await putMyProfile(filePath, '', '');
-          setProfileImageUri(filePath); // 프로필 이미지 업데이트
-          console.log('프로필 업데이트 성공');
+            // Check if the request was successful
+            if (response.status === 200) {
+              console.log('File uploaded successfully');
+            } else {
+              console.log('Failed to upload file. Status:', response.status);
+            }
+          } catch (error) {
+            console.error('Error during file upload:', error);
+          }
+
+          setProfileImageUri(filePath);
         } catch (error) {
           console.error('업로드 실패:', error);
         }
@@ -111,20 +120,19 @@ const ProfileEdit = observer(() => {
       // 2. 서버에 변경사항 저장
       await putMyProfile(profileImageUri, profileMessage, profileLink);
       navigation.goBack();
-
+      console.log(profileImageUri);
       console.log('Profile saved successfully');
     } catch (error) {
       console.error('Failed to save profile:', error);
     }
   };
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileImageContainer}>
         <TouchableOpacity onPress={requestGalleryPermission}>
           {accountStore.userProfile.profileImageUrl ? (
             <Image
-              source={{uri: profileImageUri}}
+              source={{uri: accountStore.userProfile.profileImageUrl}}
               style={styles.profileImage}
             />
           ) : (

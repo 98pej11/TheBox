@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 
 import CameraIcon from '../../statics/icons/camera.svg';
 import MapIcon from '../../statics/icons/map.svg';
@@ -7,23 +8,32 @@ import ChatIcon from '../../statics/icons/chat.svg';
 import UserIcon from '../../statics/icons/user.svg';
 import {observer} from 'mobx-react-lite';
 import {accountStore} from '../../stores/accountStore';
+import {RootStackParamList} from '../../types/navigationTypes';
+import {StackNavigationProp} from '@react-navigation/stack';
 
 const icons = [
   {Icon: MapIcon, label: 'Map'},
   {Icon: ChatIcon, label: 'Chat'},
-  {Icon: CameraIcon, label: 'Camera'},
+  {Icon: CameraIcon, label: 'CameraScreen'},
   {Icon: UserIcon, label: 'Settings'},
 ];
 
 // Footer 컴포넌트 내에서 상태 확인
 const Footer = observer(() => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const hasProfileImage = accountStore.userProfile.profileImageUrl !== '';
 
+  const handlePress = (label: string) => {
+    if (label === 'CameraScreen') {
+      navigation.navigate('CameraScreen'); // 'Camera' 화면으로 이동
+    }
+    // 필요한 경우 다른 탭도 여기에 추가
+  };
   return (
     <View style={styles.footer}>
       {icons.map(({Icon, label}, index) => (
         <TouchableOpacity key={index} style={styles.menuItem}>
-          <Icon width={30} height={30} />
+          <Icon width={30} height={30} onPress={() => handlePress(label)} />
           {/* <Text style={styles.menuText}>{label}</Text> */}
         </TouchableOpacity>
       ))}

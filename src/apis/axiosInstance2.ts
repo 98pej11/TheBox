@@ -11,7 +11,7 @@ const axiosInstance2 = axios.create({
 
 axiosInstance2.interceptors.request.use(config => {
   const token = accountStore.accessToken;
-  console.log(token);
+  // console.log(token);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

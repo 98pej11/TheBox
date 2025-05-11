@@ -26,26 +26,26 @@ interface Post {
 export default observer(function PostList() {
   const [activeTab, setActiveTab] = useState('my_page');
 
-  useEffect(() => {
-    if (accountStore.accessToken) {
-      postStore.fetchPosts(activeTab);
-    }
-  }, [activeTab, accountStore.accessToken]);
+  // useEffect(() => {
+  //   if (accountStore.accessToken) {
+  //     postStore.fetchPosts(activeTab);
+  //   }
+  // }, [activeTab, accountStore.accessToken]);
 
   const handleTabPress = (tab: string) => {
     setActiveTab(tab);
   };
 
-  const renderItem = ({item}: {item: Post}) =>
-    item.content?.contentUrl ? (
-      <View style={styles.imageContainer}>
-        <Image
-          source={{uri: item.content.contentUrl}}
-          style={styles.image}
-          resizeMode="cover"
-        />
-      </View>
-    ) : null;
+  // const renderItem = ({item}: {item: Post}) =>
+  //   item.content?.contentUrl ? (
+  //     <View style={styles.imageContainer}>
+  //       <Image
+  //         source={{uri: item.content.contentUrl}}
+  //         style={styles.image}
+  //         resizeMode="cover"
+  //       />
+  //     </View>
+  //   ) : null;
 
   return (
     <View style={styles.container}>
@@ -64,16 +64,16 @@ export default observer(function PostList() {
       </View>
 
       {/* 포스트 목록 */}
-      <View style={styles.content}>
+      {/* <View style={styles.content}>
         {postStore.isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : postStore.error ? (
           <Text style={styles.errorText}>오류 발생: {postStore.error}</Text>
-        ) : Array.isArray(postStore.posts) && postStore.posts.length === 0 ? (
+        ) : postStore.posts.length === 0 ? (
           <Text style={styles.emptyMessage}>게시물이 없습니다.</Text>
         ) : (
           <FlatList
-            data={postStore.posts || []}
+            data={postStore.posts}
             renderItem={renderItem}
             keyExtractor={item => item.id.toString()}
             numColumns={3}
@@ -82,7 +82,7 @@ export default observer(function PostList() {
             }
           />
         )}
-      </View>
+      </View> */}
     </View>
   );
 });

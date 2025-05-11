@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     borderColor: '#DBDBDB',
     borderRadius: 5,
     alignItems: 'center',
+    flex: 1,
   },
   buttonText: {
     fontSize: 14,

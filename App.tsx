@@ -17,6 +17,8 @@ import MyFeed from './src/pages/Main/MyFeed';
 import ProfileEdit from './src/pages/Main/ProfileEdit';
 import FriendList from './src/pages/Main/FriendList';
 import FriendFeed from './src/pages/Main/FriendFeed';
+import CameraScreen from './src/pages/Main/CameraScreen';
+import NewPost from './src/pages/Main/NewPost';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const DevSettings = NativeModules.DevSettings;
@@ -93,6 +95,16 @@ function App(): React.JSX.Element {
           name="FriendFeed"
           component={FriendFeed}
           options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="CameraScreen"
+          component={CameraScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="NewPost"
+          component={NewPost}
+          options={{headerTitle: 'New Post', headerBackTitle: ''}}
         />
       </Stack.Navigator>
     </NavigationContainer>

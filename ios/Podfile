@@ -22,6 +22,14 @@ target 'Project' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+ 
+  require_relative '../node_modules/react-native-permissions/scripts/setup'
+
+  setup_permissions([
+    'PhotoLibrary',
+    # 'Camera',
+    # 'LocationWhenInUse',
+  ])
 
   target 'ProjectTests' do
     inherit! :complete

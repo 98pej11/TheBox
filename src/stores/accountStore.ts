@@ -7,8 +7,8 @@ import {postEmailCode} from '../apis/postEmailCode';
 import {getMyProfile} from '../apis/getMyProfile';
 
 class AccountStore {
-  loginId: string = '98pej11@gmail.com';
-  password: string = 'asdfasdf';
+  loginId: string = 'aaa@fake.com';
+  password: string = 'password';
   userInfo: UserInfo = {
     firstName: '',
     lastName: '',

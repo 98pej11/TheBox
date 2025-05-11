@@ -5,6 +5,7 @@ export const putMyProfile = async (
   profileMessage: string,
   profileLink: string,
 ) => {
+  console.log(profileImageUrl);
   const response = await axiosInstance2.put(`/my-page`, {
     profileImageUrl,
     profileMessage,

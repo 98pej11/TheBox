@@ -3,13 +3,15 @@ import {StyleSheet, SafeAreaView} from 'react-native';
 import Footer from './Footer';
 import Header from './Header';
 import Profile from './FriendProfile';
-import {friendsStore} from '../../stores/friendsStore';
+// import {friendsStore} from '../../stores/friendsStore';
+import PostList2 from './PostList2';
 
 export default function FriendFeed() {
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <Profile />
+      <PostList2 />
       <Footer />
     </SafeAreaView>
   );
