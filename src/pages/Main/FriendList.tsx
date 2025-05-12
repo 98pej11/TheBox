@@ -57,7 +57,7 @@ export default observer(function FriendList() {
         style={{flexDirection: 'row', alignItems: 'center'}}
         onPress={() => {
           friendsStore.fetchFriendProfile(item.id).then(() => {
-            navigation.navigate('FriendFeed');
+            navigation.navigate('FriendFeed', {id: item.id});
           });
         }}>
         <Image source={{uri: item.imageUrl}} style={styles.profileImage} />

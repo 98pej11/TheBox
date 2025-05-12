@@ -23,48 +23,33 @@ interface Post {
   };
 }
 
-export default observer(function PostList() {
-  const [activeTab, setActiveTab] = useState('my_page');
+type Props = {
+  userId: number;
+};
 
-  // useEffect(() => {
-  //   if (accountStore.accessToken) {
-  //     postStore.fetchPosts(activeTab);
-  //   }
-  // }, [activeTab, accountStore.accessToken]);
+export default observer(function PostList2({userId}: Props) {
+  useEffect(() => {
+    if (accountStore.accessToken) {
+      console.log(userId);
+      postStore.fetchFriendPosts(userId);
+    }
+  }, [accountStore.accessToken]);
 
-  const handleTabPress = (tab: string) => {
-    setActiveTab(tab);
-  };
-
-  // const renderItem = ({item}: {item: Post}) =>
-  //   item.content?.contentUrl ? (
-  //     <View style={styles.imageContainer}>
-  //       <Image
-  //         source={{uri: item.content.contentUrl}}
-  //         style={styles.image}
-  //         resizeMode="cover"
-  //       />
-  //     </View>
-  //   ) : null;
+  const renderItem = ({item}: {item: Post}) =>
+    item.content?.contentUrl ? (
+      <View style={styles.imageContainer}>
+        <Image
+          source={{uri: item.content.contentUrl}}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      </View>
+    ) : null;
 
   return (
     <View style={styles.container}>
-      {/* 탭 네비게이션 */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'my_page' && styles.activeTab]}
-          onPress={() => handleTabPress('my_page')}>
-          <MyPostIcon width={20} height={20} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'mentioned' && styles.activeTab]}
-          onPress={() => handleTabPress('mentioned')}>
-          <MentionPostIcon width={20} height={20} />
-        </TouchableOpacity>
-      </View>
-
       {/* 포스트 목록 */}
-      {/* <View style={styles.content}>
+      <View style={styles.content}>
         {postStore.isLoading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : postStore.error ? (
@@ -82,7 +67,7 @@ export default observer(function PostList() {
             }
           />
         )}
-      </View> */}
+      </View>
     </View>
   );
 });

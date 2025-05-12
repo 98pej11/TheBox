@@ -5,13 +5,20 @@ import Header from './Header';
 import Profile from './FriendProfile';
 // import {friendsStore} from '../../stores/friendsStore';
 import PostList2 from './PostList2';
+import {RouteProp, useRoute} from '@react-navigation/native';
+import {RootStackParamList} from '../../types/navigationTypes';
+
+type FriendFeedRouteProp = RouteProp<RootStackParamList, 'FriendFeed'>;
 
 export default function FriendFeed() {
+  const route = useRoute<FriendFeedRouteProp>();
+  const {id} = route.params;
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <Profile />
-      <PostList2 />
+      <PostList2 userId={id} />
       <Footer />
     </SafeAreaView>
   );
