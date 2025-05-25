@@ -53,11 +53,11 @@ const Header = () => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent1}>
               <TouchableOpacity style={styles.menuItem}>
-                <UserIcon width={20} height={20} />
+                <UserIcon width={20} height={20} style={{marginLeft: 20}} />
                 <Text style={styles.modalText}>계정 관리</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleLogout} style={styles.menuItem}>
-                <LogoutIcon width={20} height={20} />
+                <LogoutIcon width={20} height={20} style={{marginLeft: 20}} />
                 <Text style={[styles.modalText, {color: '#ff0000'}]}>
                   로그아웃
                 </Text>
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent1: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -130,7 +130,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', // 아이콘과 텍스트를 가로로 배치
     alignItems: 'center', // 수직 가운데 정렬
     gap: 15,
-    marginLeft: 25,
+    // marginLeft: 25,
+    borderBottomWidth: 1,
+    borderBottomColor: '#B3B3B3',
     // paddingVertical: 10, // 패딩 추가
   },
   modalText: {
