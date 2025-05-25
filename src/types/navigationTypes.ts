@@ -13,7 +13,7 @@ export type RootStackParamList = {
   MyFeed: undefined;
   ProfileEdit: undefined;
   FriendList: undefined;
-  FriendFeed: undefined;
+  FriendFeed: {id: number};
   CameraScreen: undefined;
   NewPost: {photo: string};
 };

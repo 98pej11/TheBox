@@ -31,9 +31,20 @@ function App(): React.JSX.Element {
     }
   }, []);
 
+  const globalHeaderStyle = {
+    shadowColor: 'transparent',
+    elevation: 0,
+    borderBottomWidth: 0,
+  };
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          headerStyle: globalHeaderStyle,
+          headerShadowVisible: false,
+        }}>
         {/** 회원 관련 */}
         <Stack.Screen
           name="Home"

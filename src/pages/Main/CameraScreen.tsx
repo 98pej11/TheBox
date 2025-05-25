@@ -6,19 +6,26 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  Dimensions,
 } from 'react-native';
 import {
   Camera,
   useCameraDevice,
   useCameraPermission,
+  useCameraFormat,
 } from 'react-native-vision-camera';
-import {useNavigation} from '@react-navigation/native'; // ← 네비게이션 추가
+import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types/navigationTypes';
+import CameraSwitchIcon from '../../statics/icons/camera_switch.svg';
+import CameraCloseIcon from '../../statics/icons/camera_close.svg';
+import CameraUploadIcon from '../../statics/icons/camera_upload.svg';
+import CameraRevertIcon from '../../statics/icons/camera_revert.svg';
 
 export default function CameraScreen() {
   const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
-  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null); // 사진 저장
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [showButtons, setShowButtons] = useState(false); // 버튼 표시 여부 상태 추가
   const camera = useRef<Camera>(null);
   const device = useCameraDevice(cameraType);
   const {hasPermission, requestPermission} = useCameraPermission();
@@ -34,7 +41,12 @@ export default function CameraScreen() {
     if (camera.current == null) return;
     try {
       const photo = await camera.current.takePhoto();
-      setCapturedPhoto(photo.path); // 촬영 후 상태 업데이트
+      setCapturedPhoto(photo.path);
+
+      // 버튼이 바로 보이지 않도록 지연 시간 설정
+      setTimeout(() => {
+        setShowButtons(true); // 일정 시간 후 버튼을 표시
+      }, 500); // 0.5초 후 버튼을 보이도록 설정
     } catch (error) {
       console.error('📸 사진 촬영 실패:', error);
     }
@@ -46,6 +58,7 @@ export default function CameraScreen() {
 
   const handleRetake = () => {
     setCapturedPhoto(null);
+    setShowButtons(false); // 버튼 숨기기
   };
 
   const handleConfirm = () => {
@@ -70,30 +83,41 @@ export default function CameraScreen() {
     );
   }
 
+  // // 카메라 화면 비율
+  // const format = useCameraFormat(device, []);
+
+  // const aspectRatio = format?.videoAspectRatio ?? 4 / 3;
+
   // 사진이 찍힌 상태
   if (capturedPhoto) {
     return (
       <View style={styles.container}>
-        {/* 사진 미리보기 (1:1 비율) */}
+        {/* 사진 미리보기 */}
         <Image
           source={{uri: `file://${capturedPhoto}`}}
           style={styles.previewImage}
         />
 
-        {/* 상단 X 버튼 */}
-        <TouchableOpacity style={styles.closeButton} onPress={handleRetake}>
-          <Text style={styles.switchText}>✖</Text>
-        </TouchableOpacity>
-
-        {/* 하단 버튼 */}
-        <View style={styles.bottomButtons}>
-          <TouchableOpacity onPress={handleRetake}>
-            <Text style={styles.bottomText}>다시 찍기</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleConfirm}>
-            <Text style={styles.bottomText}>확인</Text>
-          </TouchableOpacity>
-        </View>
+        {showButtons && ( // showButtons가 true일 때만 버튼 표시
+          <>
+            <View style={styles.reButton}>
+              <TouchableOpacity onPress={handleRetake}>
+                <View style={{alignItems: 'center', gap: 3}}>
+                  <CameraRevertIcon />
+                  <Text style={styles.bottomText}>retake</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.uploadButton}>
+              <TouchableOpacity onPress={handleConfirm}>
+                <View style={{alignItems: 'center', gap: 3}}>
+                  <CameraUploadIcon />
+                  <Text style={styles.bottomText}>upload</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
     );
   }
@@ -103,14 +127,22 @@ export default function CameraScreen() {
     <View style={styles.container}>
       <Camera
         ref={camera}
-        style={StyleSheet.absoluteFill}
+        style={styles.camera}
         device={device}
         isActive={true}
         photo={true}
       />
+      {/* 상단 X 버튼 */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => {
+          navigation.goBack();
+        }}>
+        <CameraCloseIcon />
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.switchButton} onPress={toggleCameraType}>
-        <Text style={styles.switchText}>🔄</Text>
+        <CameraSwitchIcon />
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.shutterButton} onPress={takePhoto}>
@@ -130,6 +162,12 @@ const styles = StyleSheet.create({
   },
   message: {color: 'white', fontSize: 16},
 
+  // 카메라 화면
+  camera: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  },
+
   // 셔터 버튼
   shutterButton: {
     position: 'absolute',
@@ -138,7 +176,9 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#fff',
+    borderWidth: 10,
+    borderColor: '#fff',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -146,50 +186,60 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
   },
 
   // 카메라 전환 버튼
   switchButton: {
     position: 'absolute',
-    top: 40,
+    top: 60,
     right: 20,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     padding: 10,
     borderRadius: 25,
-  },
-  switchText: {
-    fontSize: 24,
-    color: 'white',
   },
 
   // X 버튼
   closeButton: {
     position: 'absolute',
-    top: 40,
+    top: 60,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     padding: 10,
     borderRadius: 25,
   },
 
-  // 미리보기 이미지 (1:1 비율)
+  // 미리보기 이미지 (풀 화면)
   previewImage: {
-    flex: 1,
-    aspectRatio: 1,
-    alignSelf: 'center',
-    marginVertical: 20,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover', // 비율 맞추기 위해 'cover'로 설정
   },
 
-  // 하단 버튼들
-  bottomButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
+  reButton: {
+    position: 'absolute',
+    bottom: 80,
+    left: 60,
+    // backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadButton: {
+    position: 'absolute',
+    bottom: 80,
+    right: 60,
+    // backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bottomText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 14,
   },
 });
