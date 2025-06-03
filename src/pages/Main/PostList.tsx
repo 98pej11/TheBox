@@ -28,7 +28,7 @@ export default observer(function PostList() {
 
   useEffect(() => {
     if (accountStore.accessToken) {
-      postStore.fetchPosts(activeTab);
+      postStore.fetchMyPosts(activeTab);
     }
   }, [activeTab, accountStore.accessToken]);
 

@@ -16,6 +16,7 @@ import {observer} from 'mobx-react-lite';
 import axios from 'axios'; // Axios를 사용하여 이미지 업로드 처리
 import {useNavigation} from '@react-navigation/native';
 import {accountStore} from '../../stores/accountStore';
+import {uploadImageToS3} from '../../utils/uploadUtils';
 
 const ProfileEdit = observer(() => {
   const navigation = useNavigation();
@@ -50,63 +51,44 @@ const ProfileEdit = observer(() => {
     launchImageLibrary({mediaType: 'photo'}, async response => {
       if (response.didCancel) {
         console.log('User canceled image picker');
-      } else if (response.errorCode) {
+        return;
+      }
+
+      if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const selectedAsset = response.assets[0];
-        const {uri, fileName, fileSize, type} = selectedAsset;
+        return;
+      }
 
-        if (!fileName || !fileSize || !type) {
-          console.log('Invalid file data');
-          return;
-        }
-
-        try {
-          // Step 1: Pre-signed URL 요청
-          const {filePath, preSignedUrl} = await postImgUpload(
-            fileName,
-            fileSize,
-            'PROFILE_IMAGE',
-          );
-          console.log('preSignedUrl:', preSignedUrl);
-          if (!filePath || !preSignedUrl) {
-            throw new Error('Pre-signed URL 요청 실패');
-          }
-          if (!uri) {
-            throw new Error('이미지 URI가 없습니다');
-          }
-
-          const fetchResponse = await fetch(uri);
-          console.log(fetchResponse);
-          const blob = await fetchResponse.blob();
-          console.log(blob);
-
-          try {
-            const response = await fetch(preSignedUrl, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': type,
-                'Content-Length': fileSize.toString(),
-              },
-              body: blob,
-            });
-
-            // Check if the request was successful
-            if (response.status === 200) {
-              console.log('File uploaded successfully');
-            } else {
-              console.log('Failed to upload file. Status:', response.status);
-            }
-          } catch (error) {
-            console.error('Error during file upload:', error);
-          }
-
-          setProfileImageUri(filePath);
-        } catch (error) {
-          console.error('업로드 실패:', error);
-        }
-      } else {
+      if (!response.assets || response.assets.length === 0) {
         console.log('No image selected');
+        return;
+      }
+
+      const selectedAsset = response.assets[0];
+      const {uri, fileName, fileSize, type} = selectedAsset;
+
+      if (!fileName || !fileSize || !type) {
+        console.log('Invalid file data');
+        return;
+      }
+
+      try {
+        // 유틸 함수 사용해서 업로드
+        const filePath = await uploadImageToS3(
+          uri || '',
+          fileName,
+          fileSize,
+          type,
+          'PROFILE_IMAGE',
+          postImgUpload,
+        );
+
+        // 업로드 성공 시 상태 업데이트
+        setProfileImageUri(filePath);
+        console.log('프로필 이미지 업로드 성공:', filePath);
+      } catch (error) {
+        console.error('프로필 이미지 업로드 실패:', error);
+        // 에러 처리 (Alert 등)
       }
     });
   };

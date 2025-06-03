@@ -1,16 +1,12 @@
-import {accountStore} from '../stores/accountStore';
 import axiosInstance1 from './axiosInstance1';
 import axios, {AxiosError} from 'axios';
 
-export const getPost = async (tab: string) => {
-  console.log('📌 요청하는 탭:', tab);
-  console.log('🔑 Access Token:', accountStore.accessToken);
-
+export const getAllPosts = async () => {
   try {
-    const response = await axiosInstance1.get(`/posts/?tab=${tab}`);
+    const response = await axiosInstance1.get(`/posts/all/`);
 
-    console.log('✅ 성공적인 응답:', response.data.data);
-    return response.data.data;
+    console.log('✅ 성공적인 응답:', response.data);
+    return response.data;
   } catch (error: unknown) {
     console.error('❌ API 요청 오류 발생:', error);
 

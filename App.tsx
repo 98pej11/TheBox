@@ -19,6 +19,7 @@ import FriendList from './src/pages/Main/FriendList';
 import FriendFeed from './src/pages/Main/FriendFeed';
 import CameraScreen from './src/pages/Main/CameraScreen';
 import NewPost from './src/pages/Main/NewPost';
+import AllPosts from './src/pages/Main/AllPosts';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const DevSettings = NativeModules.DevSettings;
@@ -116,6 +117,11 @@ function App(): React.JSX.Element {
           name="NewPost"
           component={NewPost}
           options={{headerTitle: 'New Post', headerBackTitle: ''}}
+        />
+        <Stack.Screen
+          name="AllPosts"
+          component={AllPosts}
+          options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>
