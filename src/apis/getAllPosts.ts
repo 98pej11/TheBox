@@ -3,7 +3,7 @@ import axios, {AxiosError} from 'axios';
 
 export const getAllPosts = async () => {
   try {
-    const response = await axiosInstance1.get(`/posts/all/`);
+    const response = await axiosInstance1.get(`/posts/all`);
 
     console.log('✅ 성공적인 응답:', response.data);
     return response.data;

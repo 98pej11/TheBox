@@ -7,7 +7,7 @@ interface SelectedItems {
     locationName: string;
     latitude: number;
     longitude: number;
-  };
+  }[]; // 배열로 변경
 }
 
 export const useModal = () => {
@@ -20,25 +20,19 @@ export const useModal = () => {
   const [selectedItems, setSelectedItems] = useState<SelectedItems>({
     category: [],
     mention: [],
-    location: {
-      locationName: '',
-      latitude: 0,
-      longitude: 0,
-    },
+    location: [], // 빈 배열로 초기화
   });
 
   // 각 타입별로 임시 선택 상태 분리
   const [tempCategory, setTempCategory] = useState<string[]>([]);
   const [tempMention, setTempMention] = useState<number[]>([]);
-  const [tempLocation, setTempLocation] = useState<{
-    locationName: string;
-    latitude: number;
-    longitude: number;
-  }>({
-    locationName: '',
-    latitude: 0,
-    longitude: 0,
-  });
+  const [tempLocation, setTempLocation] = useState<
+    {
+      locationName: string;
+      latitude: number;
+      longitude: number;
+    }[]
+  >([]); // 배열로 변경
 
   // 모달 열기
   const openModal = (type: 'category' | 'mention' | 'location') => {
@@ -53,7 +47,7 @@ export const useModal = () => {
         setTempMention([...selectedItems.mention]);
         break;
       case 'location':
-        setTempLocation({...selectedItems.location});
+        setTempLocation([...selectedItems.location]); // 배열 복사
         break;
     }
 
@@ -66,11 +60,7 @@ export const useModal = () => {
     // 임시 상태들 초기화
     setTempCategory([]);
     setTempMention([]);
-    setTempLocation({
-      locationName: '',
-      latitude: 0,
-      longitude: 0,
-    });
+    setTempLocation([]); // 빈 배열로 초기화
   };
 
   // 모달 확인 (변경사항 적용)
@@ -96,11 +86,7 @@ export const useModal = () => {
     // 임시 상태들 초기화
     setTempCategory([]);
     setTempMention([]);
-    setTempLocation({
-      locationName: '',
-      latitude: 0,
-      longitude: 0,
-    });
+    setTempLocation([]); // 빈 배열로 초기화
     setModalVisible(false);
   };
 
@@ -118,13 +104,13 @@ export const useModal = () => {
     );
   };
 
-  // 위치 설정
+  // 위치 설정 - 단일 위치를 배열에 저장
   const setLocationData = (locationData: {
     locationName: string;
     latitude: number;
     longitude: number;
   }) => {
-    setTempLocation(locationData);
+    setTempLocation([locationData]); // 단일 객체를 배열로 래핑
   };
 
   // 현재 모달 타입에 따른 임시 선택된 데이터 반환

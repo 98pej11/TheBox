@@ -1,4 +1,4 @@
-// NewPost.tsx - 리팩토링된 메인 컴포넌트
+// NewPost.tsx - 사진/동영상 지원하는 메인 컴포넌트
 import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
@@ -15,6 +15,7 @@ import {putFileUpload} from '../../apis/putFileUpload';
 
 // 분리된 컴포넌트들 import
 import {ImageCropper} from '../../components/ImageCropper';
+import {VideoCropper} from '../../components/VideoCropper'; // 새로 추가
 import {SelectionButtons} from '../../components/SelectionButtons';
 import {SelectionModal} from '../../components/SelectionModal';
 
@@ -26,14 +27,31 @@ import {useImageCrop} from '../../hooks/useImageCrop';
 import {getMimeTypeFromPath, generateFileName} from '../../utils/fileUtils';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {uploadImageToS3} from '../../utils/uploadUtils';
-import {postUpload} from '../../apis/postUpload';
+import {postUpload, getContentType} from '../../apis/postUpload';
+import axios from 'axios';
+import {LocationModal} from '../../components/LocationModal';
 
 type NewPostRouteProp = RouteProp<RootStackParamList, 'NewPost'>;
 
 export default function NewPost() {
   const route = useRoute<NewPostRouteProp>();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const {photo} = route.params;
+
+  // photo 또는 video 파라미터 받기
+  const {photo, video} = route.params;
+
+  // 미디어 파일 경로와 타입 결정
+  const mediaPath = photo || video;
+  const isVideo = !!video;
+
+  // mediaPath가 없으면 에러 처리
+  if (!mediaPath) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>미디어 파일이 없습니다.</Text>
+      </View>
+    );
+  }
 
   const [text, setText] = useState('');
   const scrollViewRef = useRef<any>(null);
@@ -60,47 +78,114 @@ export default function NewPost() {
     friendsStore.fetchFriendList();
   }, []);
 
+  const [isImageGesturing, setIsImageGesturing] = useState(false);
+
+  const handleImageGestureStart = () => {
+    setIsImageGesturing(true);
+  };
+
+  const handleImageGestureEnd = () => {
+    setIsImageGesturing(false);
+  };
+
   const handleConfirm = async () => {
     try {
-      console.log('작성한 글:', text);
-      console.log('선택된 친구들:', selectedItems.mention);
-      console.log('선택된 카테고리:', selectedItems.category);
-      console.log('선택된 위치:', selectedItems.location);
+      console.log('=== 게시물 업로드 시작 ===');
+      console.log('미디어 타입:', isVideo ? 'VIDEO' : 'PHOTO');
+      console.log('미디어 경로:', mediaPath);
 
-      // 파일 정보 생성
-      const mimeType = getMimeTypeFromPath(photo);
+      // 1. 파일 정보 생성
+      const mimeType = getMimeTypeFromPath(mediaPath!); // 타입 단언 추가
       const fileName = generateFileName(mimeType);
       const fileSize = 1024 * 1024; // 실제 파일 크기로 변경 권장
 
-      // 유틸 함수 사용해서 S3에 이미지 업로드
-      const filePath = await uploadImageToS3(
-        photo, // 이미지 URI
-        fileName,
-        fileSize,
-        mimeType,
-        mimeType, // 또는 'POST_IMAGE'
-        putFileUpload,
+      console.log('파일 정보:', {fileName, fileSize, mimeType});
+
+      // 2. Pre-signed URL 요청
+      console.log('=== 1단계: Pre-signed URL 요청 ===');
+      const result = await putFileUpload(fileName, fileSize, mimeType);
+
+      if (!result || !result.filePath || !result.preSignedUrl) {
+        throw new Error('Pre-signed URL 요청 실패');
+      }
+
+      const {filePath, preSignedUrl} = result;
+      console.log('Pre-signed URL 응답:', {filePath, preSignedUrl});
+
+      // 3. S3에 미디어 파일 업로드
+      console.log(
+        `=== 2단계: S3에 ${isVideo ? '동영상' : '이미지'} 업로드 ===`,
       );
 
-      console.log('이미지 업로드 성공:', filePath);
+      if (!mediaPath) {
+        throw new Error('미디어 파일 URI가 없습니다');
+      }
 
-      // 데이터로 한번 감싸야되나?
-      const request = {
-        contentUrl: filePath,
-        // location: selectedItems.location,
-        text: text,
-        tagIds: selectedItems.mention,
-        categories: selectedItems.category,
+      const fetchResponse = await fetch(`file://${mediaPath}`);
+      const blob = await fetchResponse.blob();
+
+      await axios.put(preSignedUrl, blob, {
+        headers: {
+          'Content-Type': mimeType,
+          'Content-Length': fileSize.toString(),
+        },
+      });
+
+      console.log('S3 업로드 성공');
+
+      // 4. 게시물 데이터 준비
+      console.log('=== 3단계: 게시물 데이터 준비 ===');
+      console.log('filePath:', filePath);
+      console.log('mimeType:', mimeType);
+      console.log('contentType will be:', getContentType(mimeType));
+
+      // content는 필수 필드 - 명시적으로 생성
+      const contentData = {
+        contentType: getContentType(mimeType), // 'IMAGE' 또는 'VIDEO'
+        contentUrl: filePath, // S3에 업로드된 파일 경로
       };
 
-      const result = await postUpload(request);
-      console.log('게시물 생성 성공:', result);
+      console.log('content 객체:', JSON.stringify(contentData, null, 2));
 
-      // 성공 시 AllPosts 화면으로 이동
+      // 기본 postData 구조
+      const postData: any = {
+        content: contentData, // content 필드는 반드시 포함
+      };
+
+      console.log(
+        '기본 postData (content만):',
+        JSON.stringify(postData, null, 2),
+      );
+
+      // 옵션 필드들 - 값이 있을 때만 추가
+      if (text && text.trim() !== '') {
+        postData.text = text.trim();
+        console.log('text 추가됨:', postData.text);
+      }
+
+      if (selectedItems.mention && selectedItems.mention.length > 0) {
+        postData.tagIds = selectedItems.mention;
+        console.log('tagIds 추가됨:', postData.tagIds);
+      }
+
+      if (selectedItems.category && selectedItems.category.length > 0) {
+        postData.categories = selectedItems.category;
+        console.log('categories 추가됨:', postData.categories);
+      }
+
+      console.log('=== 최종 전송할 게시물 데이터 ===');
+      console.log(JSON.stringify(postData, null, 2));
+
+      // 5. 게시물 생성 API 호출
+      console.log('=== 4단계: 게시물 생성 API 호출 ===');
+
+      const uploadResult = await postUpload(postData);
+      console.log('게시물 생성 성공:', uploadResult);
+
+      // 6. 성공 시 화면 이동
       navigation.navigate('AllPosts');
     } catch (error) {
       console.error('업로드 실패:', error);
-      // 에러 처리 (Alert 등)
     }
   };
 
@@ -113,11 +198,16 @@ export default function NewPost() {
       enableAutomaticScroll={true}
       keyboardOpeningTime={0}
       extraScrollHeight={150}
-      scrollEnabled={!isDragging}
+      scrollEnabled={!isDragging && !isImageGesturing}
       keyboardShouldPersistTaps="handled">
       <SelectionButtons selectedItems={selectedItems} onOpenModal={openModal} />
 
-      <ImageCropper photo={photo} />
+      {/* 미디어 타입에 따라 다른 컴포넌트 렌더링 */}
+      {isVideo ? (
+        <VideoCropper video={mediaPath!} />
+      ) : (
+        <ImageCropper photo={mediaPath!} />
+      )}
 
       <TextInput
         style={styles.textInput}
@@ -161,14 +251,21 @@ export default function NewPost() {
       )}
 
       {modalType === 'location' && (
-        <SelectionModal
+        <LocationModal
           visible={modalVisible}
-          modalType={modalType}
-          tempSelected={tempLocation}
+          tempSelected={
+            tempLocation.length > 0
+              ? tempLocation[0]
+              : {
+                  locationName: '',
+                  latitude: 0,
+                  longitude: 0,
+                }
+          }
           onClose={closeModal}
           onConfirm={confirmModal}
           onCancel={cancelModal}
-          onToggleItem={setLocationData as any}
+          onToggleItem={setLocationData}
         />
       )}
     </KeyboardAwareScrollView>
@@ -204,5 +301,11 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 14,
+  },
+  errorText: {
+    color: '#ff0000',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 50,
   },
 });

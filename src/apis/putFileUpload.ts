@@ -7,7 +7,7 @@ export const putFileUpload = async (
 ) => {
   console.log(fileName, fileSize, fileType);
 
-  const response = await axiosInstance1.put(`/posts/files/presigned-url`, {
+  const response = await axiosInstance1.post(`/posts/files/presigned-url`, {
     fileName,
     fileSize,
     fileType,

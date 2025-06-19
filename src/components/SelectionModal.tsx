@@ -32,41 +32,43 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
   onToggleItem,
 }) => {
   // 선택 여부 확인 함수
-  const isItemSelected = (item: string | number): boolean => {
-    if (Array.isArray(tempSelected)) {
-      // modalType에 따라 타입 안전하게 체크
-      if (modalType === 'category' && typeof item === 'string') {
-        return (tempSelected as string[]).includes(item);
-      } else if (modalType === 'mention' && typeof item === 'number') {
-        return (tempSelected as number[]).includes(item);
-      } else if (modalType === 'mention' && typeof item === 'string') {
-        // mention에서 문자열이 들어온 경우 숫자로 변환해서 체크
-        const numericItem = parseInt(item, 10);
-        return (
-          !isNaN(numericItem) &&
-          (tempSelected as number[]).includes(numericItem)
-        );
-      } else if (modalType === 'category' && typeof item === 'number') {
-        // category에서 숫자가 들어온 경우 문자열로 변환해서 체크
-        return (tempSelected as string[]).includes(item.toString());
-      }
+  const isItemSelected = (item: any): boolean => {
+    if (!Array.isArray(tempSelected)) {
+      return false; // location 객체인 경우
     }
-    return false; // location 객체인 경우 또는 타입이 맞지 않는 경우
+
+    if (modalType === 'category') {
+      // category는 문자열 배열
+      return (tempSelected as string[]).includes(item);
+    } else if (modalType === 'mention') {
+      // mention은 숫자 배열 (친구 ID들)
+      const friendId = typeof item === 'object' ? item.id : item;
+      return (tempSelected as number[]).includes(friendId);
+    } else if (modalType === 'location') {
+      // location은 문자열 배열
+      return (tempSelected as string[]).includes(item);
+    }
+
+    return false;
   };
 
   // 아이템 클릭 핸들러
-  const handleItemPress = (item: string | number) => {
-    // modalType에 따라 적절한 타입으로 변환
-    if (modalType === 'mention') {
-      // mention인 경우 숫자로 변환
-      const numericItem = typeof item === 'string' ? parseInt(item, 10) : item;
-      if (!isNaN(numericItem)) {
-        onToggleItem(numericItem);
-      }
+  const handleItemPress = (item: any) => {
+    if (modalType === 'mention' && typeof item === 'object') {
+      // mention인 경우 친구 ID를 전달
+      onToggleItem(item.id);
     } else {
-      // category인 경우 문자열로 사용
+      // category, location인 경우 아이템 자체를 전달
       onToggleItem(item);
     }
+  };
+
+  // 아이템 표시 텍스트 가져오기
+  const getDisplayText = (item: any): string => {
+    if (modalType === 'mention' && typeof item === 'object') {
+      return item.name; // 친구 이름 표시
+    }
+    return item; // 문자열인 경우 그대로 표시
   };
 
   // 모달 데이터 렌더링
@@ -79,6 +81,7 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
     return modalData.map((item, index) => {
       const isSelected = isItemSelected(item);
       const isLast = index === modalData.length - 1;
+      const displayText = getDisplayText(item);
 
       return (
         <TouchableOpacity
@@ -87,7 +90,7 @@ export const SelectionModal: React.FC<SelectionModalProps> = ({
           onPress={() => handleItemPress(item)}>
           <View style={styles.modalItemContainer}>
             <Text style={styles.checkmark}>{isSelected ? '✅' : ''}</Text>
-            <Text style={styles.modalText}>{item}</Text>
+            <Text style={styles.modalText}>{displayText}</Text>
           </View>
         </TouchableOpacity>
       );

@@ -15,28 +15,40 @@ import {
   useCameraPermission,
   useCameraFormat,
 } from 'react-native-vision-camera';
+import Video from 'react-native-video';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types/navigationTypes';
-import CameraSwitchIcon from '../../statics/icons/camera_switch.svg';
-import CameraCloseIcon from '../../statics/icons/camera_close.svg';
-import CameraUploadIcon from '../../statics/icons/camera_upload.svg';
-import CameraRevertIcon from '../../statics/icons/camera_revert.svg';
-
-// 플래시 아이콘은 텍스트로 대체
+import CameraSwitchIcon from '../../statics/icons/Camera/camera_switch.svg';
+import CameraCloseIcon from '../../statics/icons/Camera/camera_close.svg';
+import CameraUploadIcon from '../../statics/icons/Camera/camera_upload.svg';
+import CameraRevertIcon from '../../statics/icons/Camera/camera_revert.svg';
+import CameraFlashIcon from '../../statics/icons/Camera/camera_flash.svg';
 
 export default function CameraScreen() {
   const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [capturedVideo, setCapturedVideo] = useState<string | null>(null);
   const [showButtons, setShowButtons] = useState(false);
-  const [zoom, setZoom] = useState(1); // 줌 레벨 상태 추가
-  const [isZooming, setIsZooming] = useState(false); // 줌 중인지 상태
-  const [flashMode, setFlashMode] = useState<'off' | 'on' | 'auto'>('off'); // 플래시 모드 상태 추가
+  const [zoom, setZoom] = useState(1);
+  const [isZooming, setIsZooming] = useState(false);
+  const [flashMode, setFlashMode] = useState<'off' | 'on' | 'auto'>('off');
+
+  // 동영상 관련 상태
+  const [recordingMode, setRecordingMode] = useState<'photo' | 'video'>(
+    'photo',
+  );
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const camera = useRef<Camera>(null);
   const device = useCameraDevice(cameraType);
   const {hasPermission, requestPermission} = useCameraPermission();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
+  // 녹화 타이머를 위한 ref
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 핀치 줌을 위한 ref들
   const pinchState = useRef<{
@@ -50,29 +62,33 @@ export default function CameraScreen() {
     }
   }, [hasPermission]);
 
+  // 녹화 시간 정리
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, []);
+
   // 핀치 제스처 처리를 위한 PanResponder
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: event => {
-        // 두 손가락 터치일 때만 반응
         return event.nativeEvent.touches.length === 2;
       },
       onMoveShouldSetPanResponder: event => {
-        // 두 손가락 터치일 때만 반응
         return event.nativeEvent.touches.length === 2;
       },
-      onStartShouldSetPanResponderCapture: () => false, // 다른 터치 이벤트 방해하지 않기
+      onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponderCapture: event => {
-        // 두 손가락일 때만 capture
         return event.nativeEvent.touches.length === 2;
       },
       onPanResponderGrant: event => {
         if (event.nativeEvent.touches.length === 2) {
           setIsZooming(true);
-          // 초기 핀치 상태 리셋
           pinchState.current.initialDistance = null;
           pinchState.current.initialZoom = null;
-          console.log('=== PINCH START ===');
         }
       },
       onPanResponderMove: event => {
@@ -82,69 +98,55 @@ export default function CameraScreen() {
           const touch1 = touches[0];
           const touch2 = touches[1];
 
-          // 두 터치 포인트 간의 거리 계산
           const distance = Math.sqrt(
             Math.pow(touch2.pageX - touch1.pageX, 2) +
               Math.pow(touch2.pageY - touch1.pageY, 2),
           );
 
-          // 초기 거리가 없으면 현재 거리를 초기 거리로 설정
           if (pinchState.current.initialDistance === null) {
             pinchState.current.initialDistance = distance;
             pinchState.current.initialZoom = zoom;
             return;
           }
 
-          // 초기 줌 값이 없으면 return
           const initialZoom = pinchState.current.initialZoom;
           if (initialZoom === null) return;
 
-          // 줌 비율 계산
           const scale = distance / pinchState.current.initialDistance;
           let newZoom = initialZoom * scale;
 
-          // 줌 범위 제한 (디바이스에 따라 다를 수 있음)
           const minZoom = 1;
           const maxZoom = device?.neutralZoom
             ? Math.min(device.neutralZoom * 4, 10)
             : 5;
 
           newZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
-
-          console.log('=== CAMERA ZOOM ===');
-          console.log('Distance:', distance);
-          console.log('Scale:', scale);
-          console.log('New zoom:', newZoom);
-
           setZoom(newZoom);
         }
       },
-      onPanResponderRelease: event => {
-        console.log('=== PINCH END ===');
+      onPanResponderRelease: () => {
         setIsZooming(false);
-        // 핀치 상태 초기화
         pinchState.current.initialDistance = null;
         pinchState.current.initialZoom = null;
       },
       onPanResponderTerminate: () => {
-        console.log('=== PINCH TERMINATE ===');
         setIsZooming(false);
         pinchState.current.initialDistance = null;
         pinchState.current.initialZoom = null;
       },
-      onShouldBlockNativeResponder: () => false, // 네이티브 응답 차단하지 않기
+      onShouldBlockNativeResponder: () => false,
     }),
   ).current;
 
+  // 사진 촬영
   const takePhoto = async () => {
     if (camera.current == null) return;
     try {
       const photo = await camera.current.takePhoto({
-        flash: flashMode, // 플래시 모드 적용
+        flash: flashMode,
       });
       setCapturedPhoto(photo.path);
 
-      // 버튼이 바로 보이지 않도록 지연 시간 설정
       setTimeout(() => {
         setShowButtons(true);
       }, 500);
@@ -153,13 +155,76 @@ export default function CameraScreen() {
     }
   };
 
+  // 동영상 녹화 시작
+  const startVideoRecording = async () => {
+    if (camera.current == null) return;
+
+    try {
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      // 녹화 시간 타이머 시작
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+      await camera.current.startRecording({
+        flash: flashMode === 'auto' ? 'on' : flashMode, // auto일 때는 on으로 변환
+        onRecordingFinished: video => {
+          console.log('🎥 동영상 녹화 완료:', video);
+          setCapturedVideo(video.path);
+          setTimeout(() => {
+            setShowButtons(true);
+          }, 500);
+        },
+        onRecordingError: error => {
+          console.error('🎥 동영상 녹화 실패:', error);
+          setIsRecording(false);
+          setRecordingTime(0);
+          if (recordingTimerRef.current) {
+            clearInterval(recordingTimerRef.current);
+          }
+        },
+      });
+    } catch (error) {
+      console.error('🎥 동영상 녹화 시작 실패:', error);
+      setIsRecording(false);
+    }
+  };
+
+  // 동영상 녹화 중지
+  const stopVideoRecording = async () => {
+    if (camera.current == null) return;
+
+    try {
+      await camera.current.stopRecording();
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    } catch (error) {
+      console.error('🎥 동영상 녹화 중지 실패:', error);
+    }
+  };
+
+  // 촬영/녹화 버튼 핸들러
+  const handleCapturePress = () => {
+    if (recordingMode === 'photo') {
+      takePhoto();
+    } else {
+      if (isRecording) {
+        stopVideoRecording();
+      } else {
+        startVideoRecording();
+      }
+    }
+  };
+
   const toggleCameraType = () => {
     setCameraType(prev => (prev === 'back' ? 'front' : 'back'));
-    // 카메라 전환 시 줌 초기화
     setZoom(1);
   };
 
-  // 플래시 모드 토글 함수
   const toggleFlashMode = () => {
     setFlashMode(prev => {
       switch (prev) {
@@ -175,30 +240,40 @@ export default function CameraScreen() {
     });
   };
 
-  // 플래시 아이콘 스타일 (모드에 따라 다른 투명도)
-  const getFlashButtonStyle = () => {
-    return [
-      styles.flashButton,
-      {
-        backgroundColor:
-          flashMode === 'off'
-            ? 'rgba(255, 255, 255, 0.2)'
-            : 'rgba(255, 255, 255, 0.8)',
-      },
-    ];
+  // 모드 전환
+  const toggleRecordingMode = () => {
+    if (!isRecording) {
+      setRecordingMode(prev => (prev === 'photo' ? 'video' : 'photo'));
+    }
   };
 
   const handleRetake = () => {
     setCapturedPhoto(null);
+    setCapturedVideo(null);
     setShowButtons(false);
-    // 재촬영 시 줌 초기화
     setZoom(1);
+    setRecordingTime(0);
+    setIsVideoPlaying(false);
   };
 
   const handleConfirm = () => {
-    if (capturedPhoto) {
-      navigation.navigate('NewPost', {photo: capturedPhoto});
+    const mediaPath = capturedPhoto || capturedVideo;
+    if (mediaPath) {
+      if (capturedPhoto) {
+        navigation.navigate('NewPost', {photo: capturedPhoto});
+      } else if (capturedVideo) {
+        navigation.navigate('NewPost', {video: capturedVideo});
+      }
     }
+  };
+
+  // 녹화 시간을 분:초 형식으로 변환
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
   };
 
   if (!hasPermission) {
@@ -217,19 +292,57 @@ export default function CameraScreen() {
     );
   }
 
-  // 사진이 찍힌 상태
-  if (capturedPhoto) {
+  // 사진/동영상이 찍힌 상태
+  if (capturedPhoto || capturedVideo) {
     return (
       <View style={styles.container}>
-        {/* 사진 미리보기 */}
-        <Image
-          source={{uri: `file://${capturedPhoto}`}}
-          style={styles.previewImage}
-        />
+        {/* 미리보기 */}
+        {capturedPhoto ? (
+          <Image
+            source={{uri: `file://${capturedPhoto}`}}
+            style={styles.previewImage}
+          />
+        ) : capturedVideo ? (
+          <View>
+            <Video
+              source={{uri: `file://${capturedVideo}`}}
+              style={styles.previewImage}
+              resizeMode="cover"
+              repeat={true}
+              muted={false}
+              paused={!isVideoPlaying}
+              onLoad={() => {
+                console.log('Video loaded');
+                setIsVideoPlaying(true);
+              }}
+              onError={error => {
+                console.error('Video error:', error);
+              }}
+            />
+            {/* 비디오 재생/일시정지 버튼 */}
+            <TouchableOpacity
+              style={styles.playButton}
+              onPress={() => setIsVideoPlaying(!isVideoPlaying)}>
+              <Text style={styles.playButtonText}>
+                {isVideoPlaying ? '⏸️' : '▶️'}
+              </Text>
+            </TouchableOpacity>
+            {/* 녹화 시간 표시 */}
+            <View style={styles.videoDuration}>
+              <Text style={styles.videoDurationText}>
+                {formatTime(recordingTime)}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {showButtons && (
           <>
-            <View style={styles.reButton}>
+            <View
+              style={[
+                styles.reButton,
+                {top: 150 + (Dimensions.get('window').width * 4) / 3 + 20},
+              ]}>
               <TouchableOpacity onPress={handleRetake}>
                 <View style={{alignItems: 'center', gap: 3}}>
                   <CameraRevertIcon />
@@ -237,7 +350,11 @@ export default function CameraScreen() {
                 </View>
               </TouchableOpacity>
             </View>
-            <View style={styles.uploadButton}>
+            <View
+              style={[
+                styles.uploadButton,
+                {top: 150 + (Dimensions.get('window').width * 4) / 3 + 20},
+              ]}>
               <TouchableOpacity onPress={handleConfirm}>
                 <View style={{alignItems: 'center', gap: 3}}>
                   <CameraUploadIcon />
@@ -260,12 +377,23 @@ export default function CameraScreen() {
           style={styles.camera}
           device={device}
           isActive={true}
-          photo={true}
-          zoom={zoom} // 줌 레벨 적용
+          photo={recordingMode === 'photo'}
+          video={recordingMode === 'video'}
+          zoom={zoom}
         />
       </View>
 
-      {/* 줌 표시 (줌 중일 때만) */}
+      {/* 녹화 중 표시 */}
+      {isRecording && (
+        <View style={styles.recordingIndicator}>
+          <View style={styles.recordingDot} />
+          <Text style={styles.recordingText}>
+            REC {formatTime(recordingTime)}
+          </Text>
+        </View>
+      )}
+
+      {/* 줌 표시 */}
       {isZooming && (
         <View style={styles.zoomIndicator}>
           <Text style={styles.zoomText}>{zoom.toFixed(1)}x</Text>
@@ -275,9 +403,7 @@ export default function CameraScreen() {
       {/* 상단 X 버튼 */}
       <TouchableOpacity
         style={styles.closeButton}
-        onPress={() => {
-          navigation.goBack();
-        }}>
+        onPress={() => navigation.goBack()}>
         <CameraCloseIcon />
       </TouchableOpacity>
 
@@ -286,10 +412,9 @@ export default function CameraScreen() {
         <CameraSwitchIcon />
       </TouchableOpacity>
 
-      {/* 플래시 버튼 (카메라 전환 버튼 아래) */}
-      <TouchableOpacity style={getFlashButtonStyle()} onPress={toggleFlashMode}>
-        <Text style={styles.flashIconText}>⚡</Text>
-        {/* 플래시 모드 표시 텍스트 */}
+      {/* 플래시 버튼 */}
+      <TouchableOpacity style={styles.flashButton} onPress={toggleFlashMode}>
+        <CameraFlashIcon />
         {flashMode !== 'off' && (
           <View style={styles.flashModeIndicator}>
             <Text style={styles.flashModeText}>
@@ -299,16 +424,55 @@ export default function CameraScreen() {
         )}
       </TouchableOpacity>
 
-      {/* 셔터 버튼 */}
-      <TouchableOpacity style={styles.shutterButton} onPress={takePhoto}>
-        <View style={styles.shutterInner} />
+      {/* 모드 전환 버튼 (사진/동영상) */}
+      <View style={styles.modeSelector}>
+        <TouchableOpacity
+          style={[
+            styles.modeButton,
+            recordingMode === 'photo' && styles.modeButtonActive,
+          ]}
+          onPress={() => !isRecording && setRecordingMode('photo')}>
+          <Text
+            style={[
+              styles.modeText,
+              recordingMode === 'photo' && styles.modeTextActive,
+            ]}>
+            PHOTO
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.modeButton,
+            recordingMode === 'video' && styles.modeButtonActive,
+          ]}
+          onPress={() => !isRecording && setRecordingMode('video')}>
+          <Text
+            style={[
+              styles.modeText,
+              recordingMode === 'video' && styles.modeTextActive,
+            ]}>
+            VIDEO
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 셔터/녹화 버튼 */}
+      <TouchableOpacity
+        style={[styles.shutterButton, isRecording && styles.recordingButton]}
+        onPress={handleCapturePress}>
+        <View
+          style={[
+            styles.shutterInner,
+            recordingMode === 'video' && styles.videoShutterInner,
+            isRecording && styles.recordingInner,
+          ]}
+        />
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: 'black'},
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -316,21 +480,42 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   message: {color: 'white', fontSize: 16},
-
-  // 카메라 컨테이너 (제스처 감지용)
+  container: {flex: 1, backgroundColor: 'black'},
   cameraContainer: {
     flex: 1,
     width: '100%',
-    height: '100%',
+    marginTop: 150,
   },
-
-  // 카메라 화면
   camera: {
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
+    height: (Dimensions.get('window').width * 4) / 3,
   },
 
-  // 줌 표시기
+  // 녹화 중 표시
+  recordingIndicator: {
+    position: 'absolute',
+    top: 170,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'white',
+    marginRight: 8,
+  },
+  recordingText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+
   zoomIndicator: {
     position: 'absolute',
     top: '50%',
@@ -339,7 +524,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
-    marginTop: -20, // 중앙 정렬을 위한 오프셋
+    marginTop: -20,
   },
   zoomText: {
     color: 'white',
@@ -347,7 +532,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // 셔터 버튼
+  // 모드 선택기
+  modeSelector: {
+    position: 'absolute',
+    bottom: 120,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 25,
+    padding: 4,
+  },
+  modeButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  modeButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  modeText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  modeTextActive: {
+    color: 'black',
+  },
+
+  // 셔터/녹화 버튼
   shutterButton: {
     position: 'absolute',
     bottom: 40,
@@ -361,35 +573,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  recordingButton: {
+    borderColor: '#ff4444',
+  },
   shutterInner: {
     width: 50,
     height: 50,
     borderRadius: 25,
     backgroundColor: 'transparent',
   },
+  videoShutterInner: {
+    backgroundColor: '#ff4444',
+  },
+  recordingInner: {
+    backgroundColor: '#ff4444',
+    borderRadius: 8, // 사각형 모양으로 변경
+  },
 
-  // 카메라 전환 버튼
   switchButton: {
     position: 'absolute',
     top: 60,
     right: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    // backgroundColor: 'rgba(255, 255, 255, 0.2)',
     padding: 10,
     borderRadius: 25,
   },
-
-  // 플래시 버튼 (카메라 전환 버튼 아래)
   flashButton: {
     position: 'absolute',
-    top: 120, // 카메라 전환 버튼(60) + 버튼 높이(50) + 간격(10)
+    top: 120,
     right: 20,
     padding: 10,
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // 플래시 아이콘 텍스트 스타일
   flashIconText: {
     color: 'white',
     fontSize: 20,
@@ -410,22 +627,57 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-
-  // X 버튼
   closeButton: {
     position: 'absolute',
     top: 60,
     left: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    // backgroundColor: 'rgba(255, 255, 255, 0.2)',
     padding: 10,
     borderRadius: 25,
   },
 
-  // 미리보기 이미지 (풀 화면)
+  // 미리보기
   previewImage: {
+    width: Dimensions.get('window').width,
+    height: (Dimensions.get('window').width * 4) / 3,
+    marginTop: 150,
+    resizeMode: 'cover',
+    backgroundColor: '#000',
+    position: 'relative', // 추가: 내부 요소들의 절대 위치 기준
+  },
+  video: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain',
+  },
+  playButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{translateX: -25}, {translateY: -25}],
+    marginTop: 75,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButtonText: {
+    fontSize: 20,
+  },
+  videoDuration: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  videoDurationText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 
   reButton: {

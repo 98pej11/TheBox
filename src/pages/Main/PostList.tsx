@@ -24,7 +24,7 @@ interface Post {
 }
 
 export default observer(function PostList() {
-  const [activeTab, setActiveTab] = useState('my_page');
+  const [activeTab, setActiveTab] = useState('my_post');
 
   useEffect(() => {
     if (accountStore.accessToken) {
@@ -52,8 +52,8 @@ export default observer(function PostList() {
       {/* 탭 네비게이션 */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'my_page' && styles.activeTab]}
-          onPress={() => handleTabPress('my_page')}>
+          style={[styles.tab, activeTab === 'my_post' && styles.activeTab]}
+          onPress={() => handleTabPress('my_post')}>
           <MyPostIcon width={20} height={20} />
         </TouchableOpacity>
         <TouchableOpacity

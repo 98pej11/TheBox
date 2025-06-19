@@ -15,6 +15,6 @@ export type RootStackParamList = {
   FriendList: undefined;
   FriendFeed: {id: number};
   CameraScreen: undefined;
-  NewPost: {photo: string};
+  NewPost: {photo?: string; video?: string};
   AllPosts: undefined;
 };
